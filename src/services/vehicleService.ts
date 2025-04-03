@@ -1,3 +1,4 @@
+
 import { Vehicle, Inspection, InspectionItem } from '../types/models';
 
 // Mock data for vehicles
@@ -213,6 +214,35 @@ export const saveInspection = (inspection: Omit<Inspection, 'id'>): Promise<Insp
   
   return Promise.resolve(newInspection);
 };
+
+// Adding the missing functions that are required by the Vehicles.tsx page
+export const addVehicle = (newVehicle: Omit<Vehicle, 'id'>): Promise<Vehicle> => {
+  const vehicle: Vehicle = {
+    ...newVehicle,
+    id: Math.random().toString(36).substr(2, 9),
+  };
+  vehicles.push(vehicle);
+  return Promise.resolve(vehicle);
+};
+
+export const updateVehicle = (updatedVehicle: Vehicle): Promise<Vehicle> => {
+  const index = vehicles.findIndex(v => v.id === updatedVehicle.id);
+  if (index !== -1) {
+    vehicles[index] = updatedVehicle;
+  }
+  return Promise.resolve(updatedVehicle);
+};
+
+export const deleteVehicle = (id: string): Promise<void> => {
+  const index = vehicles.findIndex(v => v.id === id);
+  if (index !== -1) {
+    vehicles.splice(index, 1);
+  }
+  return Promise.resolve();
+};
+
+// Alias for saveInspection to match the import in InspectionForm.tsx
+export const submitInspection = saveInspection;
 
 export const getInspectionChecklistTemplate = (): Promise<InspectionItem[]> => {
   return Promise.resolve(inspectionItems.map(item => ({
