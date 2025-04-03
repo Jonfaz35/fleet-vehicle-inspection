@@ -44,19 +44,19 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex items-center justify-center min-h-screen bg-slate-900">
+      <Card className="w-full max-w-md shadow-lg bg-slate-800 border-slate-700 text-slate-100">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
             <Wrench className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">Fleet Vehicle Inspection</CardTitle>
-          <CardDescription>Enter your email to sign in to your account</CardDescription>
+          <CardTitle className="text-2xl font-bold text-slate-100">Fleet Vehicle Inspection</CardTitle>
+          <CardDescription className="text-slate-300">Enter your email to sign in to your account</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-slate-200">Email</Label>
               <Input 
                 id="email" 
                 type="email" 
@@ -64,21 +64,23 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                className="bg-slate-700 border-slate-600 text-slate-100 placeholder:text-slate-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-slate-200">Password</Label>
               <Input 
                 id="password" 
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)} 
                 required
+                className="bg-slate-700 border-slate-600 text-slate-100"
               />
             </div>
           </CardContent>
           <CardFooter>
-            <Button className="w-full" type="submit" disabled={isLoading}>
+            <Button className="w-full bg-primary hover:bg-primary/90" type="submit" disabled={isLoading}>
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
           </CardFooter>

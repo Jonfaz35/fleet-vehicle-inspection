@@ -14,7 +14,6 @@ import InspectionForm from "./pages/InspectionForm";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import { UserProvider, useUser } from "./contexts/UserContext";
-import UserManagement from "./components/UserManagement";
 
 const queryClient = new QueryClient();
 
@@ -61,11 +60,8 @@ const AuthenticatedApp = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-2 flex justify-between items-center">
-        <TabNavigation />
-        <UserManagement />
-      </div>
+    <div className="min-h-screen bg-slate-900 text-slate-100">
+      <TabNavigation />
       
       <Routes>
         <Route path="/login" element={<Navigate to="/" />} />
