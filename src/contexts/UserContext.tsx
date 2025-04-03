@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthUser, UserRole, InviteUserData } from '@/types/user';
 import { useToast } from '@/components/ui/use-toast';
@@ -10,7 +11,8 @@ const MOCK_USERS: User[] = [
     email: 'admin@example.com',
     role: 'admin',
     active: true,
-    createdAt: '2023-01-01T00:00:00.000Z'
+    createdAt: '2023-01-01T00:00:00.000Z',
+    hasChangedDefaultCredentials: false
   },
   {
     id: '2',
@@ -38,6 +40,9 @@ const MOCK_CREDENTIALS: Record<string, string> = {
   'tech@example.com': 'tech123'
 };
 
+// Master recovery code
+const MASTER_RECOVERY_CODE = '4703';
+
 // Define the context type
 interface UserContextType {
   currentUser: AuthUser | null;
@@ -49,6 +54,9 @@ interface UserContextType {
   updateUserRole: (userId: string, newRole: UserRole) => Promise<void>;
   deactivateUser: (userId: string) => Promise<void>;
   reactivateUser: (userId: string) => Promise<void>;
+  updateUserCredentials: (userId: string, newEmail: string, newPassword: string) => Promise<void>;
+  resetPasswordWithMasterCode: (email: string, masterCode: string, newPassword: string) => Promise<void>;
+  needsCredentialUpdate: boolean;
 }
 
 // Create the context
@@ -58,6 +66,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const [needsCredentialUpdate, setNeedsCredentialUpdate] = useState<boolean>(false);
   const { toast } = useToast();
 
   // Check for stored user on mount
@@ -65,13 +74,22 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const storedUser = localStorage.getItem('fleetUser');
     if (storedUser) {
       try {
-        setCurrentUser(JSON.parse(storedUser));
+        const parsedUser = JSON.parse(storedUser);
+        setCurrentUser(parsedUser);
+        
+        // Check if admin needs to update credentials
+        if (parsedUser.role === 'admin') {
+          const adminUser = users.find(u => u.id === parsedUser.id);
+          if (adminUser && adminUser.hasChangedDefaultCredentials === false) {
+            setNeedsCredentialUpdate(true);
+          }
+        }
       } catch (error) {
         console.error('Error parsing stored user:', error);
         localStorage.removeItem('fleetUser');
       }
     }
-  }, []);
+  }, [users]);
 
   // Login function
   const login = async (email: string, password: string): Promise<void> => {
@@ -101,6 +119,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         
         setCurrentUser(authUser);
         localStorage.setItem('fleetUser', JSON.stringify(authUser));
+        
+        // Check if admin needs to update credentials
+        if (user.role === 'admin' && user.hasChangedDefaultCredentials === false) {
+          setNeedsCredentialUpdate(true);
+        } else {
+          setNeedsCredentialUpdate(false);
+        }
+        
         resolve();
       }, 800);
     });
@@ -109,11 +135,90 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   // Logout function
   const logout = () => {
     setCurrentUser(null);
+    setNeedsCredentialUpdate(false);
     localStorage.removeItem('fleetUser');
   };
   
   // Check if current user is admin
   const isAdmin = currentUser?.role === 'admin';
+  
+  // Update user credentials
+  const updateUserCredentials = async (userId: string, newEmail: string, newPassword: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!currentUser) {
+        reject(new Error('Not authenticated'));
+        return;
+      }
+      
+      setTimeout(() => {
+        // Update the email in the users array
+        setUsers(prevUsers => prevUsers.map(user => {
+          if (user.id === userId) {
+            return {
+              ...user,
+              email: newEmail,
+              hasChangedDefaultCredentials: true
+            };
+          }
+          return user;
+        }));
+        
+        // Update the credentials map
+        const oldEmail = currentUser.email;
+        MOCK_CREDENTIALS[newEmail] = newPassword;
+        
+        if (oldEmail !== newEmail) {
+          delete MOCK_CREDENTIALS[oldEmail];
+        }
+        
+        // Update current user
+        const updatedUser: AuthUser = {
+          ...currentUser,
+          email: newEmail
+        };
+        
+        setCurrentUser(updatedUser);
+        setNeedsCredentialUpdate(false);
+        localStorage.setItem('fleetUser', JSON.stringify(updatedUser));
+        
+        toast({
+          title: "Credentials Updated",
+          description: "Your email and password have been updated successfully.",
+        });
+        
+        resolve();
+      }, 800);
+    });
+  };
+  
+  // Reset password with master code
+  const resetPasswordWithMasterCode = async (email: string, masterCode: string, newPassword: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (masterCode !== MASTER_RECOVERY_CODE) {
+          reject(new Error('Invalid master code'));
+          return;
+        }
+        
+        const user = users.find(u => u.email === email);
+        
+        if (!user) {
+          reject(new Error('User not found'));
+          return;
+        }
+        
+        // Update the password in the credentials map
+        MOCK_CREDENTIALS[email] = newPassword;
+        
+        toast({
+          title: "Password Reset",
+          description: "Your password has been reset successfully.",
+        });
+        
+        resolve();
+      }, 800);
+    });
+  };
   
   // Invite a new user
   const inviteUser = async (userData: InviteUserData): Promise<void> => {
@@ -233,7 +338,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     inviteUser,
     updateUserRole,
     deactivateUser,
-    reactivateUser
+    reactivateUser,
+    updateUserCredentials,
+    resetPasswordWithMasterCode,
+    needsCredentialUpdate
   };
 
   return <UserContext.Provider value={value}>{children}</UserContext.Provider>;

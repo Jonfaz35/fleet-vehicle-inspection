@@ -15,6 +15,7 @@ import InspectionDetail from "./pages/InspectionDetail";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import { UserProvider, useUser } from "./contexts/UserContext";
+import UpdateCredentialsModal from "./components/UpdateCredentialsModal";
 
 const queryClient = new QueryClient();
 
@@ -63,6 +64,7 @@ const AuthenticatedApp = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-100">
       <TabNavigation />
+      <UpdateCredentialsModal />
       
       <Routes>
         <Route path="/login" element={<Navigate to="/" />} />

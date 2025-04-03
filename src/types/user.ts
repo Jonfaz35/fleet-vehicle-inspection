@@ -9,6 +9,7 @@ export interface User {
   active: boolean;
   createdAt: string;
   assignedVehicleIds?: string[]; // For technicians
+  hasChangedDefaultCredentials?: boolean; // For tracking first login credential change
 }
 
 export interface AuthUser {
@@ -16,7 +17,7 @@ export interface AuthUser {
   email: string;
   name: string;
   role: UserRole;
-  assignedVehicleIds?: string[]; // Added this property to match the User interface
+  assignedVehicleIds?: string[];
 }
 
 export interface LoginCredentials {
