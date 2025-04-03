@@ -114,12 +114,15 @@ const InspectionForm = () => {
     
     setIsSubmitting(true);
     try {
+      // Explicitly type the overallStatus
+      const overallStatus = determineOverallStatus();
+      
       const newInspection = {
         vehicleId: vehicle.id,
         date: new Date().toISOString().split('T')[0],
         performedBy,
         items: inspectionItems,
-        overallStatus: determineOverallStatus(),
+        overallStatus, // Now correctly typed
         notes,
       };
       
