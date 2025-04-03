@@ -89,7 +89,8 @@ const InspectionForm = () => {
     );
   };
 
-  const determineOverallStatus = () => {
+  // Update the function to have an explicit return type
+  const determineOverallStatus = (): 'good' | 'needs-attention' | 'critical' => {
     if (inspectionItems.some(item => item.status === 'fail')) {
       return 'critical';
     } else if (inspectionItems.some(item => item.status === 'warning')) {
