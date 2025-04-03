@@ -1,4 +1,3 @@
-
 import { Vehicle, Inspection, InspectionItem } from '../types/models';
 
 // Mock data for vehicles
@@ -222,3 +221,53 @@ export const getInspectionChecklistTemplate = (): Promise<InspectionItem[]> => {
     notes: '',
   })));
 };
+
+export const getAllInspections = async (): Promise<Inspection[]> => {
+  // Simulated API call - in a real application, this would fetch from your API
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      const allInspections = mockInspections;
+      resolve(allInspections);
+    }, 800);
+  });
+};
+
+// Add more mock inspection data
+const mockInspections: Inspection[] = [
+  {
+    id: "insp-001",
+    vehicleId: "van-001",
+    date: "2023-11-15",
+    performedBy: "Mike Johnson",
+    items: [
+      { id: "item-001", name: "Brakes", category: "Mechanical", status: "pass", notes: "In good condition" },
+      { id: "item-002", name: "Lights", category: "Electrical", status: "pass", notes: "All working" },
+    ],
+    overallStatus: "good",
+    notes: "Vehicle is in excellent condition",
+  },
+  {
+    id: "insp-002",
+    vehicleId: "van-002",
+    date: "2023-11-10",
+    performedBy: "Sarah Williams",
+    items: [
+      { id: "item-003", name: "Oil Level", category: "Fluids", status: "warning", notes: "Slightly low" },
+      { id: "item-004", name: "Tires", category: "Mechanical", status: "pass", notes: "Good tread" },
+    ],
+    overallStatus: "needs-attention",
+    notes: "Oil needs to be topped up",
+  },
+  {
+    id: "insp-003",
+    vehicleId: "van-003",
+    date: "2023-11-05",
+    performedBy: "John Smith",
+    items: [
+      { id: "item-005", name: "Battery", category: "Electrical", status: "fail", notes: "Needs replacement" },
+      { id: "item-006", name: "Wiper Blades", category: "Exterior", status: "warning", notes: "Worn" },
+    ],
+    overallStatus: "critical",
+    notes: "Battery replacement required urgently",
+  },
+];
