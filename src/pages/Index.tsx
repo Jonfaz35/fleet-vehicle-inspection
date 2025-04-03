@@ -153,7 +153,7 @@ const Index = () => {
             )}
           </CardContent>
           <CardFooter>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="bg-background hover:bg-accent">
               <Link to="/inspections">
                 <Wrench className="mr-2 h-4 w-4" />
                 View All Inspections
@@ -172,7 +172,7 @@ const Index = () => {
               Manage Vehicles
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" className="bg-background hover:bg-accent">
             <Link to="/inspections">
               <FileCheck className="mr-2 h-4 w-4" />
               View Inspection Records

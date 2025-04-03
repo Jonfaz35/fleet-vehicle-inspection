@@ -4,7 +4,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { ChevronLeft, Clipboard, Save } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChevronLeft, Clipboard, Save, Car, Settings, Tool, Sun } from 'lucide-react';
 import { getVehicleById, submitInspection } from '@/services/vehicleService';
 import { Vehicle, Inspection, InspectionItem } from '@/types/models';
 import { useToast } from '@/components/ui/use-toast';
@@ -34,6 +35,7 @@ const InspectionForm = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [generalNotes, setGeneralNotes] = useState('');
   const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  const [activeTab, setActiveTab] = useState('notes');
   const { toast } = useToast();
   const navigate = useNavigate();
   const { currentUser } = useUser();
@@ -175,6 +177,16 @@ const InspectionForm = () => {
     }
   };
 
+  // Helper function to render each category's checklist
+  const renderCategoryChecklist = (category: ChecklistCategory) => {
+    return (
+      <InspectionChecklist
+        categories={[category]}
+        onItemChange={handleItemChange}
+      />
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="container py-8">
@@ -243,23 +255,105 @@ const InspectionForm = () => {
         <div className="lg:col-span-3">
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Inspection Notes</CardTitle>
+              <CardTitle>Inspection Form</CardTitle>
             </CardHeader>
             <CardContent>
-              <Textarea
-                placeholder="Add overall inspection notes..."
-                value={generalNotes}
-                onChange={(e) => setGeneralNotes(e.target.value)}
-                className="min-h-[120px]"
-              />
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-6">
+                  <TabsTrigger value="notes">
+                    <Clipboard className="h-4 w-4 mr-2" />
+                    Notes
+                  </TabsTrigger>
+                  <TabsTrigger value="exterior">
+                    <Car className="h-4 w-4 mr-2" />
+                    Exterior
+                  </TabsTrigger>
+                  <TabsTrigger value="interior">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Interior
+                  </TabsTrigger>
+                  <TabsTrigger value="underhood">
+                    <Tool className="h-4 w-4 mr-2" />
+                    Under Hood
+                  </TabsTrigger>
+                  <TabsTrigger value="mechanical">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Mechanical
+                  </TabsTrigger>
+                  <TabsTrigger value="summary">
+                    <Sun className="h-4 w-4 mr-2" />
+                    Summary
+                  </TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="notes" className="mt-4">
+                  <Textarea
+                    placeholder="Add overall inspection notes..."
+                    value={generalNotes}
+                    onChange={(e) => setGeneralNotes(e.target.value)}
+                    className="min-h-[120px]"
+                  />
+                </TabsContent>
+                
+                <TabsContent value="exterior" className="mt-4">
+                  {renderCategoryChecklist(inspectionCategories[0])}
+                </TabsContent>
+                
+                <TabsContent value="interior" className="mt-4">
+                  {renderCategoryChecklist(inspectionCategories[1])}
+                </TabsContent>
+                
+                <TabsContent value="underhood" className="mt-4">
+                  {renderCategoryChecklist(inspectionCategories[2])}
+                </TabsContent>
+                
+                <TabsContent value="mechanical" className="mt-4">
+                  {renderCategoryChecklist(inspectionCategories[3])}
+                </TabsContent>
+                
+                <TabsContent value="summary" className="mt-4">
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Inspection Summary</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Review all inspection items before submitting.
+                      </p>
+                      
+                      {inspectionCategories.map((category) => (
+                        <div key={category.name} className="mb-4">
+                          <h4 className="font-medium mb-2">{category.name}</h4>
+                          <div className="space-y-1">
+                            {category.items.map((item) => {
+                              const inspectedItem = inspectionItems.find(i => i.id === item.id);
+                              return (
+                                <div key={item.id} className="flex justify-between text-sm">
+                                  <span>{item.name}</span>
+                                  <span className={`font-medium ${inspectedItem ? 
+                                    (inspectedItem.status === 'pass' || inspectedItem.status === 'good') ? 'text-green-500' :
+                                    (inspectedItem.status === 'warning' || inspectedItem.status === 'needs-attention') ? 'text-amber-500' :
+                                    'text-red-500' : 'text-gray-400'}`}>
+                                    {inspectedItem ? inspectedItem.status.toUpperCase() : 'Not Checked'}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    
+                    <div className="pt-4">
+                      <h3 className="text-lg font-medium mb-2">General Notes</h3>
+                      <p className="text-sm whitespace-pre-line">
+                        {generalNotes || 'No general notes provided.'}
+                      </p>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
           
-          <InspectionChecklist 
-            categories={inspectionCategories} 
-            onItemChange={handleItemChange} 
-          />
-
           <div className="flex justify-end mt-6">
             <Button onClick={handleSubmit} disabled={isSaving} size="lg">
               <Save className="mr-2 h-4 w-4" />
