@@ -20,6 +20,20 @@ type InspectionChecklistProps = {
   className?: string;
 };
 
+// Mapping between UI-friendly status names and the actual status values
+const statusMapping = {
+  'good': 'pass',
+  'needs-attention': 'warning',
+  'critical': 'fail'
+} as const;
+
+// Reverse mapping for display purposes
+const reverseStatusMapping = {
+  'pass': 'good',
+  'warning': 'needs-attention',
+  'fail': 'critical'
+} as const;
+
 const InspectionChecklist: React.FC<InspectionChecklistProps> = ({
   categories,
   onItemChange,
@@ -38,7 +52,7 @@ const InspectionChecklist: React.FC<InspectionChecklistProps> = ({
       id: itemId,
       name: itemName,
       category: categoryName,
-      status,
+      status: statusMapping[status] as InspectionItem['status'],
       notes: notes[itemId] || ''
     });
   };
@@ -53,7 +67,7 @@ const InspectionChecklist: React.FC<InspectionChecklistProps> = ({
       id: itemId,
       name: itemName,
       category: categoryName,
-      status: checkedState[itemId] || 'good',
+      status: checkedState[itemId] ? statusMapping[checkedState[itemId]] as InspectionItem['status'] : 'pass',
       notes: noteText
     });
   };

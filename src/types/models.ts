@@ -15,7 +15,7 @@ export interface InspectionItem {
   id: string;
   name: string;
   category: string;
-  status: 'pass' | 'fail' | 'warning';
+  status: 'pass' | 'fail' | 'warning' | 'good' | 'needs-attention' | 'critical';
   notes?: string;
 }
 

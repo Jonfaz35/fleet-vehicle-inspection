@@ -11,6 +11,22 @@ import { useToast } from '@/components/ui/use-toast';
 import { useUser } from '@/contexts/UserContext';
 import InspectionChecklist, { ChecklistCategory } from '@/components/InspectionChecklist';
 
+// Mapping between inspection item statuses and overall vehicle statuses
+const mapStatusToOverall = (status: InspectionItem['status']): 'good' | 'needs-attention' | 'critical' => {
+  switch (status) {
+    case 'fail':
+    case 'critical':
+      return 'critical';
+    case 'warning':
+    case 'needs-attention':
+      return 'needs-attention';
+    case 'pass':
+    case 'good':
+    default:
+      return 'good';
+  }
+};
+
 const InspectionForm = () => {
   const { id } = useParams<{ id: string }>();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
@@ -111,8 +127,17 @@ const InspectionForm = () => {
 
   const determineOverallStatus = (): 'good' | 'needs-attention' | 'critical' => {
     if (inspectionItems.length === 0) return 'good';
-    if (inspectionItems.some(item => item.status === 'critical')) return 'critical';
-    if (inspectionItems.some(item => item.status === 'needs-attention')) return 'needs-attention';
+    
+    // Check for critical items first
+    if (inspectionItems.some(item => mapStatusToOverall(item.status) === 'critical')) {
+      return 'critical';
+    }
+    
+    // Then check for items that need attention
+    if (inspectionItems.some(item => mapStatusToOverall(item.status) === 'needs-attention')) {
+      return 'needs-attention';
+    }
+    
     return 'good';
   };
 
