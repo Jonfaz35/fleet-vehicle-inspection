@@ -76,11 +76,6 @@ const Login = () => {
                 required
               />
             </div>
-            <div className="text-sm text-gray-500">
-              <p>Demo credentials:</p>
-              <p>Admin: admin@example.com / admin123</p>
-              <p>User: user@example.com / user123</p>
-            </div>
           </CardContent>
           <CardFooter>
             <Button className="w-full" type="submit" disabled={isLoading}>
