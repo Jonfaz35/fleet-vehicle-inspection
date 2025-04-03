@@ -25,7 +25,7 @@ const TabNavigation = () => {
             <TabsTrigger 
               value="dashboard" 
               asChild 
-              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-none text-slate-300 hover:bg-slate-700 hover:text-white"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-none text-white hover:bg-slate-700 hover:text-white"
             >
               <Link to="/" className="flex items-center justify-center gap-2">
                 <LayoutDashboard className="h-4 w-4" />
@@ -35,7 +35,7 @@ const TabNavigation = () => {
             <TabsTrigger 
               value="vehicles" 
               asChild 
-              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-none text-slate-300 hover:bg-slate-700 hover:text-white"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-none text-white hover:bg-slate-700 hover:text-white"
             >
               <Link to="/vehicles" className="flex items-center justify-center gap-2">
                 <Car className="h-4 w-4" />
@@ -45,7 +45,7 @@ const TabNavigation = () => {
             <TabsTrigger 
               value="inspections" 
               asChild 
-              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-none text-slate-300 hover:bg-slate-700 hover:text-white"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-none text-white hover:bg-slate-700 hover:text-white"
             >
               <Link to="/inspections" className="flex items-center justify-center gap-2">
                 <FileSearch className="h-4 w-4" />
@@ -55,7 +55,7 @@ const TabNavigation = () => {
             <TabsTrigger 
               value="settings" 
               asChild 
-              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-none text-slate-300 hover:bg-slate-700 hover:text-white"
+              className="flex-1 data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-slate-700 data-[state=active]:text-white rounded-none text-white hover:bg-slate-700 hover:text-white"
             >
               <Link to="/settings" className="flex items-center justify-center gap-2">
                 <Settings className="h-4 w-4" />
