@@ -12,7 +12,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onSearchChange }) => 
     <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
       <div className="flex items-center">
         <Wrench className="h-8 w-8 text-plumbing-500 mr-2" />
-        <h1 className="text-3xl font-bold text-plumbing-700">Van Plumb Check</h1>
+        <h1 className="text-3xl font-bold text-plumbing-700">Fleet Vehicle Inspection</h1>
       </div>
       
       <div className="w-full md:w-64 relative">
