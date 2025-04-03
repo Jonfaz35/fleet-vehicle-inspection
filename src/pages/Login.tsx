@@ -22,13 +22,17 @@ const Login = () => {
     setIsLoading(true);
     
     try {
+      // Add console logs for debugging
+      console.log('Attempting login with:', { email });
       await login(email, password);
+      console.log('Login successful');
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
       navigate('/');
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         variant: "destructive",
         title: "Login failed",
@@ -44,7 +48,7 @@ const Login = () => {
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <Wrench className="h-12 w-12 text-plumbing-500" />
+            <Wrench className="h-12 w-12 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold">Fleet Vehicle Inspection</CardTitle>
           <CardDescription>Enter your email to sign in to your account</CardDescription>
@@ -71,6 +75,11 @@ const Login = () => {
                 onChange={(e) => setPassword(e.target.value)} 
                 required
               />
+            </div>
+            <div className="text-sm text-gray-500">
+              <p>Demo credentials:</p>
+              <p>Admin: admin@example.com / admin123</p>
+              <p>User: user@example.com / user123</p>
             </div>
           </CardContent>
           <CardFooter>

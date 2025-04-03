@@ -24,13 +24,13 @@ const UserManagement = () => {
       <DropdownMenuTrigger asChild>
         <Button 
           variant="ghost" 
-          className="relative h-10 w-10 rounded-full bg-plumbing-100 p-0 text-plumbing-700 hover:bg-plumbing-200"
+          className="relative h-10 w-10 rounded-full bg-blue-100 p-0 text-blue-700 hover:bg-blue-200"
           aria-label="User menu"
         >
           <User className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-56 bg-white">
         <DropdownMenuLabel>
           <div className="font-normal text-xs text-muted-foreground">Signed in as</div>
           <div className="font-medium">{currentUser.name}</div>
