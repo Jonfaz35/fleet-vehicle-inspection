@@ -11,6 +11,7 @@ import Inspections from "./pages/Inspections";
 import Settings from "./pages/Settings";
 import VehicleDetail from "./pages/VehicleDetail";
 import InspectionForm from "./pages/InspectionForm";
+import InspectionDetail from "./pages/InspectionDetail";
 import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import { UserProvider, useUser } from "./contexts/UserContext";
@@ -68,6 +69,7 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
         <Route path="/vehicles" element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />
         <Route path="/inspections" element={<ProtectedRoute><Inspections /></ProtectedRoute>} />
+        <Route path="/inspection/:id" element={<ProtectedRoute><InspectionDetail /></ProtectedRoute>} />
         <Route path="/settings" element={
           <AdminRoute>
             <Settings />
