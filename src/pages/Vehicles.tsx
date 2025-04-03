@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import VehicleCard from '@/components/VehicleCard';
 import DashboardHeader from '@/components/DashboardHeader';
 import VehicleSummary from '@/components/VehicleSummary';
-import { getVehicles } from '@/services/vehicleService';
+import VehicleManagement from '@/components/VehicleManagement';
+import { getVehicles, addVehicle, updateVehicle, deleteVehicle } from '@/services/vehicleService';
 import { Vehicle } from '@/types/models';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -45,6 +46,46 @@ const Vehicles = () => {
     setFilteredVehicles(filtered);
   };
 
+  const handleAddVehicle = async (newVehicle: Omit<Vehicle, 'id'>) => {
+    try {
+      const addedVehicle = await addVehicle(newVehicle);
+      setVehicles([...vehicles, addedVehicle]);
+      setFilteredVehicles([...filteredVehicles, addedVehicle]);
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Failed to add vehicle:', error);
+      return Promise.reject(error);
+    }
+  };
+
+  const handleEditVehicle = async (updatedVehicle: Vehicle) => {
+    try {
+      await updateVehicle(updatedVehicle);
+      const updatedVehicles = vehicles.map(v => 
+        v.id === updatedVehicle.id ? updatedVehicle : v
+      );
+      setVehicles(updatedVehicles);
+      setFilteredVehicles(updatedVehicles);
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Failed to update vehicle:', error);
+      return Promise.reject(error);
+    }
+  };
+
+  const handleDeleteVehicle = async (id: string) => {
+    try {
+      await deleteVehicle(id);
+      const updatedVehicles = vehicles.filter(v => v.id !== id);
+      setVehicles(updatedVehicles);
+      setFilteredVehicles(updatedVehicles);
+      return Promise.resolve();
+    } catch (error) {
+      console.error('Failed to delete vehicle:', error);
+      return Promise.reject(error);
+    }
+  };
+
   return (
     <div className="container py-8">
       <h2 className="text-2xl font-semibold mb-4 text-gray-800">Fleet Vehicles</h2>
@@ -52,6 +93,14 @@ const Vehicles = () => {
       <div className="mb-6">
         <DashboardHeader onSearchChange={handleSearch} />
       </div>
+      
+      <VehicleManagement 
+        vehicles={vehicles}
+        onAddVehicle={handleAddVehicle}
+        onEditVehicle={handleEditVehicle}
+        onDeleteVehicle={handleDeleteVehicle}
+        className="mb-6"
+      />
       
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -12,6 +12,7 @@ import Settings from "./pages/Settings";
 import VehicleDetail from "./pages/VehicleDetail";
 import InspectionForm from "./pages/InspectionForm";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
 import { UserProvider, useUser } from "./contexts/UserContext";
 import UserManagement from "./components/UserManagement";
 
@@ -22,7 +23,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { currentUser, isAdmin } = useUser();
   
   if (!currentUser) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   if (!isAdmin) {
@@ -35,9 +36,29 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+// Protected route component that checks for authenticated user
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { currentUser } = useUser();
+  
+  if (!currentUser) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 // Auth wrapper component
 const AuthenticatedApp = () => {
   const { currentUser } = useUser();
+  
+  if (!currentUser) {
+    return (
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="*" element={<Navigate to="/login" />} />
+      </Routes>
+    );
+  }
   
   return (
     <div className="min-h-screen bg-gray-50">
@@ -47,16 +68,17 @@ const AuthenticatedApp = () => {
       </div>
       
       <Routes>
-        <Route path="/" element={<Index />} />
-        <Route path="/vehicles" element={<Vehicles />} />
-        <Route path="/inspections" element={<Inspections />} />
+        <Route path="/login" element={<Navigate to="/" />} />
+        <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+        <Route path="/vehicles" element={<ProtectedRoute><Vehicles /></ProtectedRoute>} />
+        <Route path="/inspections" element={<ProtectedRoute><Inspections /></ProtectedRoute>} />
         <Route path="/settings" element={
           <AdminRoute>
             <Settings />
           </AdminRoute>
         } />
-        <Route path="/vehicle/:id" element={<VehicleDetail />} />
-        <Route path="/inspect/:id" element={<InspectionForm />} />
+        <Route path="/vehicle/:id" element={<ProtectedRoute><VehicleDetail /></ProtectedRoute>} />
+        <Route path="/inspect/:id" element={<ProtectedRoute><InspectionForm /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </div>

@@ -1,138 +1,241 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
-import { User, UserRole, InviteUserData } from '@/types/user';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User, AuthUser, UserRole, InviteUserData } from '@/types/user';
 import { useToast } from '@/components/ui/use-toast';
 
-// Sample users for demonstration
-const sampleUsers: User[] = [
+// Mock data for users
+const MOCK_USERS: User[] = [
   {
     id: '1',
     name: 'Admin User',
-    email: 'admin@fleetinspection.com',
+    email: 'admin@example.com',
     role: 'admin',
     active: true,
-    createdAt: new Date().toISOString(),
+    createdAt: '2023-01-01T00:00:00.000Z'
   },
   {
     id: '2',
     name: 'Regular User',
-    email: 'user@fleetinspection.com',
+    email: 'user@example.com',
     role: 'user',
     active: true,
-    createdAt: new Date().toISOString(),
+    createdAt: '2023-01-02T00:00:00.000Z'
   }
 ];
 
-interface UserContextType {
-  currentUser: User | null;
-  users: User[];
-  isAdmin: boolean;
-  login: (email: string) => void;
-  logout: () => void;
-  inviteUser: (userData: InviteUserData) => void;
-  toggleUserStatus: (userId: string) => void;
-  changeUserRole: (userId: string, role: UserRole) => void;
-}
-
-const UserContext = createContext<UserContextType | undefined>(undefined);
-
-export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [users, setUsers] = useState<User[]>(sampleUsers);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const { toast } = useToast();
-
-  // Auto-login as admin for demonstration purposes
-  useEffect(() => {
-    login('admin@fleetinspection.com');
-  }, []);
-
-  const login = (email: string) => {
-    const user = users.find(u => u.email === email);
-    if (user && user.active) {
-      setCurrentUser(user);
-      toast({
-        title: 'Logged in',
-        description: `Welcome back, ${user.name}`,
-      });
-    } else {
-      toast({
-        title: 'Login failed',
-        description: 'User not found or inactive',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const logout = () => {
-    setCurrentUser(null);
-    toast({
-      title: 'Logged out',
-      description: 'You have been logged out successfully',
-    });
-  };
-
-  const inviteUser = (userData: InviteUserData) => {
-    const newUser: User = {
-      id: (users.length + 1).toString(),
-      name: userData.email.split('@')[0],
-      email: userData.email,
-      role: userData.role,
-      active: true,
-      createdAt: new Date().toISOString(),
-    };
-    
-    setUsers([...users, newUser]);
-    
-    toast({
-      title: 'User invited',
-      description: `Invitation sent to ${userData.email}`,
-    });
-  };
-
-  const toggleUserStatus = (userId: string) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, active: !user.active } : user
-    ));
-    
-    const targetUser = users.find(user => user.id === userId);
-    if (targetUser) {
-      toast({
-        title: targetUser.active ? 'User deactivated' : 'User activated',
-        description: `${targetUser.name}'s account has been ${targetUser.active ? 'deactivated' : 'activated'}`,
-      });
-    }
-  };
-
-  const changeUserRole = (userId: string, role: UserRole) => {
-    setUsers(users.map(user => 
-      user.id === userId ? { ...user, role } : user
-    ));
-    
-    const targetUser = users.find(user => user.id === userId);
-    if (targetUser) {
-      toast({
-        title: 'Role updated',
-        description: `${targetUser.name}'s role has been updated to ${role}`,
-      });
-    }
-  };
-
-  return (
-    <UserContext.Provider value={{ 
-      currentUser, 
-      users, 
-      isAdmin: currentUser?.role === 'admin', 
-      login, 
-      logout,
-      inviteUser,
-      toggleUserStatus,
-      changeUserRole
-    }}>
-      {children}
-    </UserContext.Provider>
-  );
+// Mock user credentials
+const MOCK_CREDENTIALS: Record<string, string> = {
+  'admin@example.com': 'admin123',
+  'user@example.com': 'user123'
 };
 
+// Define the context type
+interface UserContextType {
+  currentUser: AuthUser | null;
+  isAdmin: boolean;
+  users: User[];
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => void;
+  inviteUser: (userData: InviteUserData) => Promise<void>;
+  updateUserRole: (userId: string, newRole: UserRole) => Promise<void>;
+  deactivateUser: (userId: string) => Promise<void>;
+  reactivateUser: (userId: string) => Promise<void>;
+}
+
+// Create the context
+const UserContext = createContext<UserContextType | undefined>(undefined);
+
+// Provider component
+export const UserProvider = ({ children }: { children: ReactNode }) => {
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const { toast } = useToast();
+
+  // Check for stored user on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('fleetUser');
+    if (storedUser) {
+      try {
+        setCurrentUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing stored user:', error);
+        localStorage.removeItem('fleetUser');
+      }
+    }
+  }, []);
+
+  // Login function
+  const login = async (email: string, password: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      // Simulate API call delay
+      setTimeout(() => {
+        const correctPassword = MOCK_CREDENTIALS[email];
+        
+        if (!correctPassword || correctPassword !== password) {
+          reject(new Error('Invalid credentials'));
+          return;
+        }
+        
+        const user = users.find(u => u.email === email);
+        
+        if (!user || !user.active) {
+          reject(new Error('User not found or inactive'));
+          return;
+        }
+        
+        const authUser: AuthUser = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        };
+        
+        setCurrentUser(authUser);
+        localStorage.setItem('fleetUser', JSON.stringify(authUser));
+        resolve();
+      }, 800);
+    });
+  };
+  
+  // Logout function
+  const logout = () => {
+    setCurrentUser(null);
+    localStorage.removeItem('fleetUser');
+  };
+  
+  // Check if current user is admin
+  const isAdmin = currentUser?.role === 'admin';
+  
+  // Invite a new user
+  const inviteUser = async (userData: InviteUserData): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!isAdmin) {
+        reject(new Error('Unauthorized'));
+        return;
+      }
+      
+      if (users.some(u => u.email === userData.email)) {
+        reject(new Error('Email already in use'));
+        return;
+      }
+      
+      // Simulate API call delay
+      setTimeout(() => {
+        const newUser: User = {
+          id: `user-${Date.now()}`,
+          name: userData.email.split('@')[0],
+          email: userData.email,
+          role: userData.role,
+          active: true,
+          createdAt: new Date().toISOString()
+        };
+        
+        setUsers(prevUsers => [...prevUsers, newUser]);
+        
+        toast({
+          title: "User Invited",
+          description: `Invitation sent to ${userData.email}`,
+        });
+        
+        resolve();
+      }, 800);
+    });
+  };
+  
+  // Update a user's role
+  const updateUserRole = async (userId: string, newRole: UserRole): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!isAdmin) {
+        reject(new Error('Unauthorized'));
+        return;
+      }
+      
+      // Simulate API call delay
+      setTimeout(() => {
+        setUsers(prevUsers => prevUsers.map(user => 
+          user.id === userId ? { ...user, role: newRole } : user
+        ));
+        
+        toast({
+          title: "User Role Updated",
+          description: `User role has been updated to ${newRole}`,
+        });
+        
+        resolve();
+      }, 800);
+    });
+  };
+  
+  // Deactivate a user
+  const deactivateUser = async (userId: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!isAdmin) {
+        reject(new Error('Unauthorized'));
+        return;
+      }
+      
+      // Prevent deactivating self
+      if (userId === currentUser?.id) {
+        reject(new Error('Cannot deactivate your own account'));
+        return;
+      }
+      
+      // Simulate API call delay
+      setTimeout(() => {
+        setUsers(prevUsers => prevUsers.map(user => 
+          user.id === userId ? { ...user, active: false } : user
+        ));
+        
+        toast({
+          title: "User Deactivated",
+          description: `User account has been deactivated`,
+        });
+        
+        resolve();
+      }, 800);
+    });
+  };
+  
+  // Reactivate a user
+  const reactivateUser = async (userId: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      if (!isAdmin) {
+        reject(new Error('Unauthorized'));
+        return;
+      }
+      
+      // Simulate API call delay
+      setTimeout(() => {
+        setUsers(prevUsers => prevUsers.map(user => 
+          user.id === userId ? { ...user, active: true } : user
+        ));
+        
+        toast({
+          title: "User Reactivated",
+          description: `User account has been reactivated`,
+        });
+        
+        resolve();
+      }, 800);
+    });
+  };
+
+  const value = {
+    currentUser,
+    isAdmin,
+    users,
+    login,
+    logout,
+    inviteUser,
+    updateUserRole,
+    deactivateUser,
+    reactivateUser
+  };
+
+  return <UserContext.Provider value={value}>{children}</UserContext.Provider>;
+};
+
+// Custom hook to use the user context
 export const useUser = () => {
   const context = useContext(UserContext);
   if (context === undefined) {

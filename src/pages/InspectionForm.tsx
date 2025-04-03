@@ -1,148 +1,152 @@
 
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ChevronLeft, Clipboard, Save } from 'lucide-react';
+import { getVehicleById, submitInspection } from '@/services/vehicleService';
+import { Vehicle, Inspection, InspectionItem } from '@/types/models';
 import { useToast } from '@/components/ui/use-toast';
-import { ChevronLeft } from 'lucide-react';
-import { Vehicle, InspectionItem } from '@/types/models';
-import { getVehicleById, getInspectionChecklistTemplate, saveInspection } from '@/services/vehicleService';
-import StatusBadge from '@/components/StatusBadge';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useUser } from '@/contexts/UserContext';
+import InspectionChecklist, { ChecklistCategory } from '@/components/InspectionChecklist';
 
 const InspectionForm = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
-  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
-  const [performedBy, setPerformedBy] = useState('');
-  const [notes, setNotes] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState('');
-  const [categories, setCategories] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [generalNotes, setGeneralNotes] = useState('');
+  const [inspectionItems, setInspectionItems] = useState<InspectionItem[]>([]);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+  const { currentUser } = useUser();
+
+  // Sample inspection checklist categories and items
+  const inspectionCategories: ChecklistCategory[] = [
+    {
+      name: "Exterior",
+      items: [
+        { id: "ext-1", name: "Body Condition" },
+        { id: "ext-2", name: "Lights" },
+        { id: "ext-3", name: "Wipers" },
+        { id: "ext-4", name: "Windows & Mirrors" },
+        { id: "ext-5", name: "Tires" }
+      ]
+    },
+    {
+      name: "Interior",
+      items: [
+        { id: "int-1", name: "Seats & Belts" },
+        { id: "int-2", name: "Dashboard Indicators" },
+        { id: "int-3", name: "Horn" },
+        { id: "int-4", name: "Air Conditioning" },
+        { id: "int-5", name: "Interior Lights" }
+      ]
+    },
+    {
+      name: "Under Hood",
+      items: [
+        { id: "hood-1", name: "Engine Oil Level" },
+        { id: "hood-2", name: "Coolant Level" },
+        { id: "hood-3", name: "Brake Fluid" },
+        { id: "hood-4", name: "Power Steering Fluid" },
+        { id: "hood-5", name: "Battery" }
+      ]
+    },
+    {
+      name: "Mechanical",
+      items: [
+        { id: "mech-1", name: "Brakes" },
+        { id: "mech-2", name: "Steering" },
+        { id: "mech-3", name: "Suspension" },
+        { id: "mech-4", name: "Transmission" },
+        { id: "mech-5", name: "Exhaust System" }
+      ]
+    }
+  ];
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadVehicleData = async () => {
       if (!id) return;
       
       setIsLoading(true);
       try {
-        const [vehicleData, checklistTemplate] = await Promise.all([
-          getVehicleById(id),
-          getInspectionChecklistTemplate(),
-        ]);
-        
+        const vehicleData = await getVehicleById(id);
         if (!vehicleData) {
           toast({
             title: 'Error',
             description: 'Vehicle not found',
             variant: 'destructive',
           });
-          navigate('/');
+          navigate('/vehicles');
           return;
         }
         
         setVehicle(vehicleData);
-        setInspectionItems(checklistTemplate);
-        
-        // Extract unique categories
-        const uniqueCategories = Array.from(new Set(checklistTemplate.map(item => item.category)));
-        setCategories(uniqueCategories);
-        if (uniqueCategories.length > 0) {
-          setCurrentCategory(uniqueCategories[0]);
-        }
       } catch (error) {
-        console.error('Failed to load data:', error);
+        console.error('Failed to load vehicle data:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load inspection data',
+          description: 'Failed to load vehicle data',
           variant: 'destructive',
         });
+        navigate('/vehicles');
       } finally {
         setIsLoading(false);
       }
     };
-    
-    loadData();
-  }, [id, navigate, toast]);
 
-  const handleItemStatusChange = (itemId: string, status: 'pass' | 'fail' | 'warning') => {
-    setInspectionItems(prev => 
-      prev.map(item => 
-        item.id === itemId ? { ...item, status } : item
-      )
-    );
+    loadVehicleData();
+  }, [id, toast, navigate]);
+
+  const handleItemChange = (item: InspectionItem) => {
+    setInspectionItems(prev => {
+      // Remove any existing item with the same ID
+      const filtered = prev.filter(i => i.id !== item.id);
+      // Add the updated item
+      return [...filtered, item];
+    });
   };
 
-  const handleItemNotesChange = (itemId: string, notes: string) => {
-    setInspectionItems(prev => 
-      prev.map(item => 
-        item.id === itemId ? { ...item, notes } : item
-      )
-    );
-  };
-
-  // Update the function to have an explicit return type
   const determineOverallStatus = (): 'good' | 'needs-attention' | 'critical' => {
-    if (inspectionItems.some(item => item.status === 'fail')) {
-      return 'critical';
-    } else if (inspectionItems.some(item => item.status === 'warning')) {
-      return 'needs-attention';
-    }
+    if (inspectionItems.length === 0) return 'good';
+    if (inspectionItems.some(item => item.status === 'critical')) return 'critical';
+    if (inspectionItems.some(item => item.status === 'needs-attention')) return 'needs-attention';
     return 'good';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!vehicle) return;
+  const handleSubmit = async () => {
+    if (!vehicle || !currentUser) return;
     
-    if (!performedBy.trim()) {
-      toast({
-        title: 'Missing Information',
-        description: 'Please enter who performed the inspection',
-        variant: 'destructive',
-      });
-      return;
-    }
-    
-    setIsSubmitting(true);
+    setIsSaving(true);
     try {
-      // Explicitly type the overallStatus
-      const overallStatus = determineOverallStatus();
-      
-      const newInspection = {
+      const newInspection: Omit<Inspection, 'id'> = {
         vehicleId: vehicle.id,
-        date: new Date().toISOString().split('T')[0],
-        performedBy,
+        date: new Date().toISOString(),
+        performedBy: currentUser.name,
         items: inspectionItems,
-        overallStatus, // Now correctly typed
-        notes,
+        notes: generalNotes,
+        overallStatus: determineOverallStatus()
       };
       
-      await saveInspection(newInspection);
+      await submitInspection(newInspection);
       
       toast({
-        title: 'Success',
-        description: 'Inspection saved successfully',
+        title: 'Inspection Submitted',
+        description: 'The vehicle inspection has been successfully recorded.',
       });
       
       navigate(`/vehicle/${vehicle.id}`);
     } catch (error) {
-      console.error('Failed to save inspection:', error);
+      console.error('Failed to submit inspection:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save inspection',
+        description: 'Failed to submit inspection',
         variant: 'destructive',
       });
     } finally {
-      setIsSubmitting(false);
+      setIsSaving(false);
     }
   };
 
@@ -160,156 +164,84 @@ const InspectionForm = () => {
         <div className="text-center py-12">
           <p className="text-gray-500">Vehicle not found.</p>
           <Button asChild className="mt-4">
-            <a href="/">Return to Dashboard</a>
+            <a href="/vehicles">Return to Vehicles</a>
           </Button>
         </div>
       </div>
     );
   }
 
-  const categoryItems = inspectionItems.filter(item => item.category === currentCategory);
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container py-8">
-        <div className="flex items-center mb-6">
-          <Button variant="outline" size="sm" onClick={() => navigate(-1)} className="mr-4">
+    <div className="container py-8">
+      <div className="flex items-center mb-6">
+        <Button asChild variant="outline" size="sm" className="mr-4">
+          <a href="/vehicles">
             <ChevronLeft className="h-4 w-4 mr-1" />
-            Back
-          </Button>
-          <h1 className="text-2xl font-bold">New Inspection for {vehicle.name}</h1>
+            Back to Vehicles
+          </a>
+        </Button>
+        <h1 className="text-2xl font-bold">{vehicle.name} Inspection</h1>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Clipboard className="mr-2 h-5 w-5 text-plumbing-500" />
+                Vehicle Info
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Model</p>
+                  <p>{vehicle.year} {vehicle.model}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">License Plate</p>
+                  <p>{vehicle.licensePlate}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Mileage</p>
+                  <p>{vehicle.mileage.toLocaleString()} mi</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Assigned To</p>
+                  <p>{vehicle.assignedTo}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Inspection Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="vehicle">Vehicle</Label>
-                    <Input id="vehicle" value={`${vehicle.name} - ${vehicle.licensePlate}`} disabled />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Date</Label>
-                    <Input id="date" value={new Date().toLocaleDateString()} disabled />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="performedBy">Performed By</Label>
-                    <Input 
-                      id="performedBy" 
-                      value={performedBy} 
-                      onChange={(e) => setPerformedBy(e.target.value)} 
-                      placeholder="Enter name"
-                      required 
-                    />
-                  </div>
-                  <div className="space-y-2 pt-4">
-                    <Label htmlFor="notes">Notes</Label>
-                    <Textarea 
-                      id="notes" 
-                      value={notes} 
-                      onChange={(e) => setNotes(e.target.value)} 
-                      placeholder="Enter any general notes about this inspection"
-                      rows={4}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+        <div className="lg:col-span-3">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Inspection Notes</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                placeholder="Add overall inspection notes..."
+                value={generalNotes}
+                onChange={(e) => setGeneralNotes(e.target.value)}
+                className="min-h-[120px]"
+              />
+            </CardContent>
+          </Card>
+          
+          <InspectionChecklist 
+            categories={inspectionCategories} 
+            onItemChange={handleItemChange} 
+          />
 
-            <div className="lg:col-span-3">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Inspection Checklist</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Tabs value={currentCategory} onValueChange={setCurrentCategory}>
-                    <TabsList className="mb-4 flex flex-wrap">
-                      {categories.map(category => (
-                        <TabsTrigger key={category} value={category}>
-                          {category}
-                        </TabsTrigger>
-                      ))}
-                    </TabsList>
-                    <TabsContent value={currentCategory} className="mt-0">
-                      <div className="space-y-6">
-                        {categoryItems.map((item) => (
-                          <div key={item.id} className="border rounded-lg p-4">
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                              <h3 className="font-medium text-lg">{item.name}</h3>
-                              <div className="mt-2 md:mt-0">
-                                <RadioGroup 
-                                  value={item.status} 
-                                  onValueChange={(value) => 
-                                    handleItemStatusChange(item.id, value as 'pass' | 'fail' | 'warning')
-                                  }
-                                  className="flex space-x-2"
-                                >
-                                  <div className="flex items-center space-x-1">
-                                    <RadioGroupItem value="pass" id={`${item.id}-pass`} />
-                                    <Label 
-                                      htmlFor={`${item.id}-pass`} 
-                                      className="cursor-pointer status-badge status-good"
-                                    >
-                                      Pass
-                                    </Label>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <RadioGroupItem value="warning" id={`${item.id}-warning`} />
-                                    <Label 
-                                      htmlFor={`${item.id}-warning`} 
-                                      className="cursor-pointer status-badge status-needs-attention"
-                                    >
-                                      Warning
-                                    </Label>
-                                  </div>
-                                  <div className="flex items-center space-x-1">
-                                    <RadioGroupItem value="fail" id={`${item.id}-fail`} />
-                                    <Label 
-                                      htmlFor={`${item.id}-fail`} 
-                                      className="cursor-pointer status-badge status-critical"
-                                    >
-                                      Fail
-                                    </Label>
-                                  </div>
-                                </RadioGroup>
-                              </div>
-                            </div>
-                            {(item.status === 'warning' || item.status === 'fail') && (
-                              <div className="mt-3">
-                                <Label htmlFor={`notes-${item.id}`} className="text-sm">Notes</Label>
-                                <Textarea 
-                                  id={`notes-${item.id}`}
-                                  value={item.notes || ''}
-                                  onChange={(e) => handleItemNotesChange(item.id, e.target.value)}
-                                  placeholder="Describe the issue..."
-                                  className="mt-1"
-                                />
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
-              
-              <div className="flex justify-end mt-6">
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting}
-                  className="px-8"
-                >
-                  {isSubmitting ? 'Saving...' : 'Complete Inspection'}
-                </Button>
-              </div>
-            </div>
+          <div className="flex justify-end mt-6">
+            <Button onClick={handleSubmit} disabled={isSaving} size="lg">
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? 'Submitting...' : 'Submit Inspection'}
+            </Button>
           </div>
-        </form>
+        </div>
       </div>
     </div>
   );
