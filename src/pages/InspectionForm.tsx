@@ -1,18 +1,16 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, Clipboard, Save, Car, Settings, Tool, Sun } from 'lucide-react';
+import { ChevronLeft, Clipboard, Save, Car, Settings, Wrench, Sun } from 'lucide-react';
 import { getVehicleById, submitInspection } from '@/services/vehicleService';
 import { Vehicle, Inspection, InspectionItem } from '@/types/models';
 import { useToast } from '@/components/ui/use-toast';
 import { useUser } from '@/contexts/UserContext';
 import InspectionChecklist, { ChecklistCategory } from '@/components/InspectionChecklist';
 
-// Mapping between inspection item statuses and overall vehicle statuses
 const mapStatusToOverall = (status: InspectionItem['status']): 'good' | 'needs-attention' | 'critical' => {
   switch (status) {
     case 'fail':
@@ -40,7 +38,6 @@ const InspectionForm = () => {
   const navigate = useNavigate();
   const { currentUser } = useUser();
 
-  // Sample inspection checklist categories and items
   const inspectionCategories: ChecklistCategory[] = [
     {
       name: "Exterior",
@@ -120,9 +117,7 @@ const InspectionForm = () => {
 
   const handleItemChange = (item: InspectionItem) => {
     setInspectionItems(prev => {
-      // Remove any existing item with the same ID
       const filtered = prev.filter(i => i.id !== item.id);
-      // Add the updated item
       return [...filtered, item];
     });
   };
@@ -130,12 +125,10 @@ const InspectionForm = () => {
   const determineOverallStatus = (): 'good' | 'needs-attention' | 'critical' => {
     if (inspectionItems.length === 0) return 'good';
     
-    // Check for critical items first
     if (inspectionItems.some(item => mapStatusToOverall(item.status) === 'critical')) {
       return 'critical';
     }
     
-    // Then check for items that need attention
     if (inspectionItems.some(item => mapStatusToOverall(item.status) === 'needs-attention')) {
       return 'needs-attention';
     }
@@ -177,7 +170,6 @@ const InspectionForm = () => {
     }
   };
 
-  // Helper function to render each category's checklist
   const renderCategoryChecklist = (category: ChecklistCategory) => {
     return (
       <InspectionChecklist
@@ -273,7 +265,7 @@ const InspectionForm = () => {
                     Interior
                   </TabsTrigger>
                   <TabsTrigger value="underhood">
-                    <Tool className="h-4 w-4 mr-2" />
+                    <Wrench className="h-4 w-4 mr-2" />
                     Under Hood
                   </TabsTrigger>
                   <TabsTrigger value="mechanical">
