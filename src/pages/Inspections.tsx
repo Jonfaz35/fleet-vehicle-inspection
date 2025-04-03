@@ -1,7 +1,5 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { getAllInspections } from '@/services/vehicleService';
 import { Inspection } from '@/types/models';
 import { useToast } from '@/components/ui/use-toast';
@@ -9,6 +7,7 @@ import { FileCheck, Search, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import StatusBadge from '@/components/StatusBadge';
+import { useTechnicianAccess } from '@/contexts/UserContext';
 
 const Inspections = () => {
   const [inspections, setInspections] = useState<Inspection[]>([]);
@@ -16,14 +15,19 @@ const Inspections = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { isTechnician, hasVehicleAccess } = useTechnicianAccess();
 
   useEffect(() => {
     const loadInspections = async () => {
       setIsLoading(true);
       try {
         const data = await getAllInspections();
-        setInspections(data);
-        setFilteredInspections(data);
+        const accessibleInspections = isTechnician
+          ? data.filter(inspection => hasVehicleAccess(inspection.vehicleId))
+          : data;
+        
+        setInspections(accessibleInspections);
+        setFilteredInspections(accessibleInspections);
       } catch (error) {
         console.error('Failed to load inspections:', error);
         toast({
@@ -37,7 +41,7 @@ const Inspections = () => {
     };
 
     loadInspections();
-  }, [toast]);
+  }, [toast, isTechnician, hasVehicleAccess]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     const query = event.target.value.toLowerCase();

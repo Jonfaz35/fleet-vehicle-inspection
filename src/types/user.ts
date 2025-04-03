@@ -1,5 +1,4 @@
-
-export type UserRole = 'admin' | 'user';
+export type UserRole = 'admin' | 'user' | 'technician';
 
 export interface User {
   id: string;
@@ -8,6 +7,7 @@ export interface User {
   role: UserRole;
   active: boolean;
   createdAt: string;
+  assignedVehicleIds?: string[]; // For technicians
 }
 
 export interface AuthUser {

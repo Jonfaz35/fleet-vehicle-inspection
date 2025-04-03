@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import VehicleCard from '@/components/VehicleCard';
 import DashboardHeader from '@/components/DashboardHeader';
@@ -7,20 +6,27 @@ import VehicleManagement from '@/components/VehicleManagement';
 import { getVehicles, addVehicle, updateVehicle, deleteVehicle } from '@/services/vehicleService';
 import { Vehicle } from '@/types/models';
 import { useToast } from '@/components/ui/use-toast';
+import { useTechnicianAccess } from '@/contexts/UserContext';
 
 const Vehicles = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [filteredVehicles, setFilteredVehicles] = useState<Vehicle[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const { isTechnician, assignedVehicleIds } = useTechnicianAccess();
 
   useEffect(() => {
     const loadVehicles = async () => {
       setIsLoading(true);
       try {
         const data = await getVehicles();
-        setVehicles(data);
-        setFilteredVehicles(data);
+        // Filter vehicles if user is a technician
+        const accessibleVehicles = isTechnician
+          ? data.filter(vehicle => assignedVehicleIds.includes(vehicle.id))
+          : data;
+        
+        setVehicles(accessibleVehicles);
+        setFilteredVehicles(accessibleVehicles);
       } catch (error) {
         console.error('Failed to load vehicles:', error);
         toast({
@@ -34,7 +40,7 @@ const Vehicles = () => {
     };
 
     loadVehicles();
-  }, [toast]);
+  }, [toast, isTechnician, assignedVehicleIds]);
 
   const handleSearch = (query: string) => {
     const filtered = vehicles.filter((vehicle) =>
@@ -88,7 +94,9 @@ const Vehicles = () => {
 
   return (
     <div className="container py-8">
-      <h2 className="text-2xl font-semibold mb-4 text-gray-800">Fleet Vehicles</h2>
+      <h2 className="text-2xl font-semibold mb-4 text-slate-200">
+        {isTechnician ? 'My Assigned Vehicles' : 'Fleet Vehicles'}
+      </h2>
       
       <div className="mb-6">
         <DashboardHeader onSearchChange={handleSearch} />

@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { User, AuthUser, UserRole, InviteUserData } from '@/types/user';
 import { useToast } from '@/components/ui/use-toast';
@@ -20,13 +19,23 @@ const MOCK_USERS: User[] = [
     role: 'user',
     active: true,
     createdAt: '2023-01-02T00:00:00.000Z'
+  },
+  {
+    id: '3',
+    name: 'Tech User',
+    email: 'tech@example.com',
+    role: 'technician',
+    active: true,
+    createdAt: '2023-01-03T00:00:00.000Z',
+    assignedVehicleIds: ['1', '2']
   }
 ];
 
 // Mock user credentials
 const MOCK_CREDENTIALS: Record<string, string> = {
   'admin@example.com': 'admin123',
-  'user@example.com': 'user123'
+  'user@example.com': 'user123',
+  'tech@example.com': 'tech123'
 };
 
 // Define the context type
@@ -67,7 +76,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   // Login function
   const login = async (email: string, password: string): Promise<void> => {
     return new Promise((resolve, reject) => {
-      // Simulate API call delay
       setTimeout(() => {
         const correctPassword = MOCK_CREDENTIALS[email];
         
@@ -87,7 +95,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
+          assignedVehicleIds: user.assignedVehicleIds
         };
         
         setCurrentUser(authUser);
@@ -119,7 +128,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Simulate API call delay
       setTimeout(() => {
         const newUser: User = {
           id: `user-${Date.now()}`,
@@ -150,7 +158,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Simulate API call delay
       setTimeout(() => {
         setUsers(prevUsers => prevUsers.map(user => 
           user.id === userId ? { ...user, role: newRole } : user
@@ -174,13 +181,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Prevent deactivating self
       if (userId === currentUser?.id) {
         reject(new Error('Cannot deactivate your own account'));
         return;
       }
       
-      // Simulate API call delay
       setTimeout(() => {
         setUsers(prevUsers => prevUsers.map(user => 
           user.id === userId ? { ...user, active: false } : user
@@ -204,7 +209,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
       
-      // Simulate API call delay
       setTimeout(() => {
         setUsers(prevUsers => prevUsers.map(user => 
           user.id === userId ? { ...user, active: true } : user
@@ -242,4 +246,23 @@ export const useUser = () => {
     throw new Error('useUser must be used within a UserProvider');
   }
   return context;
+};
+
+// Custom hook for technician-specific functionality
+export const useTechnicianAccess = () => {
+  const { currentUser } = useUser();
+  
+  const isTechnician = currentUser?.role === 'technician';
+  const assignedVehicleIds = currentUser?.assignedVehicleIds || [];
+  
+  const hasVehicleAccess = (vehicleId: string) => {
+    if (!isTechnician) return true;
+    return assignedVehicleIds.includes(vehicleId);
+  };
+  
+  return {
+    isTechnician,
+    assignedVehicleIds,
+    hasVehicleAccess
+  };
 };
