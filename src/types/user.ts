@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'user' | 'technician';
 
 export interface User {
@@ -15,6 +16,7 @@ export interface AuthUser {
   email: string;
   name: string;
   role: UserRole;
+  assignedVehicleIds?: string[]; // Added this property to match the User interface
 }
 
 export interface LoginCredentials {
